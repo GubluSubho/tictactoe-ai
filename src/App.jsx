@@ -1,20 +1,15 @@
-import Navbar from './components/Navbar'
-import Hero from './sections/Hero'
-import Features from './sections/Features'
-import Difficulty from './sections/Difficulty'
-import CTA from './sections/CTA'
-import Footer from './sections/Footer'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Landing from './pages/Landing'
+import Game from './game/Game'
 
 function App() {
   return (
-    <main className="bg-[#060912] min-h-screen overflow-x-hidden">
-      <Navbar />
-      <Hero />
-      <Features />
-      <Difficulty />
-      <CTA />
-      <Footer />
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/game" element={<Game />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

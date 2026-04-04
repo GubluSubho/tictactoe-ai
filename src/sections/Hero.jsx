@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import Board3D from '../components/Board3D'
+import { useNavigate } from 'react-router-dom'
 
 export default function Hero() {
+  const navigate = useNavigate()
   return (
     <section className="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24 pb-16 relative overflow-hidden">
 
@@ -42,7 +44,9 @@ export default function Hero() {
 
       {/* CTA Buttons */}
       <div className="flex items-center gap-4 flex-wrap justify-center relative mb-16">
-        <button className="bg-[#c8f04a] text-[#060912] font-semibold px-8 py-3.5 rounded-xl hover:bg-[#d4f55e] transition-all duration-200 hover:-translate-y-0.5 text-sm">
+        <button
+          onClick={() => navigate('/game')}
+          className="bg-[#c8f04a] text-[#060912] font-semibold px-8 py-3.5 rounded-xl hover:bg-[#d4f55e] transition-all duration-200 hover:-translate-y-0.5 text-sm">
           ▶ &nbsp;Play Now
         </button>
         <button
