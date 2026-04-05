@@ -133,6 +133,52 @@ export default function ModeSelect() {
           }}>2 Players</div>
         </button>
 
+        {/* Algorithm Visualizer */}
+<button
+  onClick={() => navigate('/visualizer')}
+  style={modeCardStyle}
+  onMouseEnter={e => {
+    e.currentTarget.style.borderColor = 'rgba(160,130,255,0.4)'
+    e.currentTarget.style.background = 'rgba(160,130,255,0.04)'
+    e.currentTarget.style.transform = 'translateY(-3px)'
+    e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.4)'
+  }}
+  onMouseLeave={e => {
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+    e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+    e.currentTarget.style.transform = 'translateY(0)'
+    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)'
+  }}
+>
+  <div style={{
+    width: '52px', height: '52px', borderRadius: '14px',
+    background: 'rgba(160,130,255,0.1)',
+    border: '1px solid rgba(160,130,255,0.2)',
+    display: 'flex', alignItems: 'center',
+    justifyContent: 'center', fontSize: '1.6rem', flexShrink: 0,
+  }}>📊</div>
+  <div style={{ textAlign: 'left', flex: 1 }}>
+    <div style={{
+      fontFamily: 'Syne, sans-serif', fontWeight: 700,
+      fontSize: '1.05rem', color: 'white', marginBottom: '4px',
+    }}>
+      Algorithm Visualizer
+    </div>
+    <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5 }}>
+      Watch Minimax think in real time. See every decision the AI evaluates.
+    </div>
+  </div>
+  <div style={{
+    fontSize: '0.7rem', color: '#a082ff',
+    background: 'rgba(160,130,255,0.08)',
+    border: '1px solid rgba(160,130,255,0.15)',
+    padding: '0.2rem 0.6rem', borderRadius: '6px',
+    whiteSpace: 'nowrap', flexShrink: 0,
+  }}>
+    Educational
+  </div>
+</button>
+
         {/* Leaderboard link — subtle, below cards */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',

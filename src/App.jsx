@@ -5,8 +5,9 @@ import ModeSelect from './pages/ModeSelect'
 import Game from './game/Game'
 import LocalMultiplayer from './game/LocalMultiplayer'
 import Profile from './pages/Profile'
-import ProtectedRoute from './components/ProtectedRoute'
 import Leaderboard from './pages/Leaderboard'
+import Visualizer from './pages/Visualizer'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -19,11 +20,6 @@ function App() {
             <ModeSelect />
           </ProtectedRoute>
         } />
-        <Route path="/leaderboard" element={
-  <ProtectedRoute>
-    <Leaderboard />
-  </ProtectedRoute>
-} />
         <Route path="/game" element={
           <ProtectedRoute>
             <Game />
@@ -37,6 +33,16 @@ function App() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/leaderboard" element={
+          <ProtectedRoute>
+            <Leaderboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/visualizer" element={
+          <ProtectedRoute>
+            <Visualizer />
           </ProtectedRoute>
         } />
       </Routes>
