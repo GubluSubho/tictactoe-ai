@@ -31,25 +31,42 @@ export default function Game() {
 
   // Save match result to Firebase
   const saveMatchToDb = async (outcome) => {
-    if (!user) return
-    try {
-      await push(ref(db, `matches/${user.uid}`), {
-        outcome,
-        difficulty,
-        playerSign,
-        timestamp: Date.now(),
-      })
-      const snap = await get(ref(db, `users/${user.uid}/scores`))
-      const current = snap.val() || { wins: 0, losses: 0, draws: 0 }
-      await set(ref(db, `users/${user.uid}/scores`), {
-        wins: current.wins + (outcome === 'win' ? 1 : 0),
-        losses: current.losses + (outcome === 'loss' ? 1 : 0),
-        draws: current.draws + (outcome === 'draw' ? 1 : 0),
-      })
-    } catch (err) {
-      console.error('Failed to save match:', err)
+  if (!user) return
+  try {
+    await push(ref(db, `matches/${user.uid}`), {
+      outcome,
+      difficulty,
+      playerSign,
+      timestamp: Date.now(),
+    })
+
+    const snap = await get(ref(db, `users/${user.uid}/scores`))
+    const current = snap.val() || { wins: 0, losses: 0, draws: 0 }
+    const updated = {
+      wins: current.wins + (outcome === 'win' ? 1 : 0),
+      losses: current.losses + (outcome === 'loss' ? 1 : 0),
+      draws: current.draws + (outcome === 'draw' ? 1 : 0),
     }
+    await set(ref(db, `users/${user.uid}/scores`), updated)
+
+    // Update leaderboard
+    const profileSnap = await get(ref(db, `users/${user.uid}`))
+    const profileData = profileSnap.val()
+    await set(ref(db, `leaderboard/${user.uid}`), {
+      username: profileData?.username || 'Player',
+      wins: updated.wins,
+      losses: updated.losses,
+      draws: updated.draws,
+      total: updated.wins + updated.losses + updated.draws,
+      winRate: updated.wins + updated.losses + updated.draws > 0
+        ? Math.round((updated.wins / (updated.wins + updated.losses + updated.draws)) * 100)
+        : 0,
+      lastPlayed: Date.now(),
+    })
+  } catch (err) {
+    console.error('Failed to save match:', err)
   }
+}
 
   // Main game effect
   useEffect(() => {
@@ -277,28 +294,28 @@ export default function Game() {
       <BackButton navigate={navigate} />
 
       {/* Profile button */}
-      <button
-        onClick={() => navigate('/profile', { state: { from: '/game' } })}
-        style={{
-          position: 'absolute', top: '1.5rem', right: '1.5rem',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          color: 'rgba(255,255,255,0.5)',
-          padding: '0.5rem 1rem', borderRadius: '8px',
-          cursor: 'pointer', fontSize: '0.82rem',
-          transition: 'all 0.2s', fontFamily: 'DM Sans, sans-serif',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-          e.currentTarget.style.color = 'white'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-          e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
-        }}
-      >
-        👤 Profile
-      </button>
+<button
+  onClick={() => navigate('/profile', { state: { from: '/game' } })}
+  style={{
+    position: 'absolute', top: '1.5rem', right: '1.5rem',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: 'rgba(255,255,255,0.5)',
+    padding: '0.5rem 1rem', borderRadius: '8px',
+    cursor: 'pointer', fontSize: '0.82rem',
+    transition: 'all 0.2s', fontFamily: 'DM Sans, sans-serif',
+  }}
+  onMouseEnter={e => {
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
+    e.currentTarget.style.color = 'white'
+  }}
+  onMouseLeave={e => {
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+    e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+  }}
+>
+  👤 Profile
+</button>
 
       {/* Warning modal */}
       {showWarning && (
@@ -586,7 +603,7 @@ const signBtnStyle = {
 function BackButton({ navigate }) {
   return (
     <button
-      onClick={() => navigate('/')}
+      onClick={() => navigate('/select')}
       style={{
         position: 'absolute', top: '1.5rem', left: '1.5rem',
         background: 'transparent',

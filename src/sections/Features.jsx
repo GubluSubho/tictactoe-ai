@@ -11,11 +11,19 @@ const features = [
   },
   {
     icon: '🌐',
-    title: 'Online Multiplayer',
-    desc: 'Challenge friends in real-time with WebSocket-powered matches. Share a room code or link to invite anyone, anywhere, instantly.',
-    tag: 'Real-time',
+    title: 'Local Multiplayer',
+    desc: 'Challenge a friend on the same device in pass-and-play mode. Two players, one board, pure skill.',
+    tag: 'Multiplayer',
     tagColor: { background: 'rgba(126,242,200,0.1)', color: '#7ef2c8' },
     iconBg: { background: 'rgba(126,242,200,0.1)', border: '1px solid rgba(126,242,200,0.2)' },
+  },
+  {
+    icon: '🏆',
+    title: 'Global Leaderboard',
+    desc: 'Compete with players worldwide. Rankings are based on total wins and win rate across all difficulty levels.',
+    tag: 'Competitive',
+    tagColor: { background: 'rgba(251,191,36,0.1)', color: '#fbbf24' },
+    iconBg: { background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' },
   },
   {
     icon: '📊',
@@ -26,17 +34,9 @@ const features = [
     iconBg: { background: 'rgba(160,130,255,0.1)', border: '1px solid rgba(160,130,255,0.2)' },
   },
   {
-    icon: '🏆',
-    title: 'Elo Ranking System',
-    desc: 'Compete on a global leaderboard with an Elo-based rating system. Track your climb and compare stats with friends.',
-    tag: 'Competitive',
-    tagColor: { background: 'rgba(100,180,255,0.1)', color: '#64b4ff' },
-    iconBg: { background: 'rgba(100,180,255,0.1)', border: '1px solid rgba(100,180,255,0.2)' },
-  },
-  {
     icon: '📈',
     title: 'Game Analytics',
-    desc: 'Detailed match history, win/loss/draw breakdowns, move heatmaps, and full game replays. See exactly where each game was won or lost.',
+    desc: 'Detailed match history, win/loss/draw breakdowns per difficulty level. See exactly where each game was won or lost.',
     tag: 'Insights',
     tagColor: { background: 'rgba(255,160,80,0.1)', color: '#ffa050' },
     iconBg: { background: 'rgba(255,160,80,0.1)', border: '1px solid rgba(255,160,80,0.2)' },
@@ -44,7 +44,7 @@ const features = [
   {
     icon: '🎨',
     title: 'Theme & Accessibility',
-    desc: 'Dark and light modes, custom board styles, sound effects, full keyboard navigation, and screen reader support out of the box.',
+    desc: 'Dark mode, custom board styles, sound effects, full keyboard navigation, and screen reader support out of the box.',
     tag: 'Inclusive',
     tagColor: { background: 'rgba(255,100,180,0.1)', color: '#ff64b4' },
     iconBg: { background: 'rgba(255,100,180,0.1)', border: '1px solid rgba(255,100,180,0.2)' },
@@ -66,11 +66,9 @@ export default function Features() {
       },
       { threshold: 0.1 }
     )
-
     cardsRef.current.forEach((card) => {
       if (card) observer.observe(card)
     })
-
     return () => observer.disconnect()
   }, [])
 
@@ -85,7 +83,7 @@ export default function Features() {
           Everything you need<br />to play and learn
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1rem', fontWeight: 300, maxWidth: '480px', lineHeight: 1.7 }}>
-          From a perfectly optimal AI to real-time multiplayer and a live algorithm visualizer.
+          From a perfectly optimal AI to local multiplayer, a global leaderboard, and a live algorithm visualizer.
         </p>
       </div>
 
@@ -97,10 +95,8 @@ export default function Features() {
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.07)',
-              borderRadius: '16px',
-              padding: '1.75rem',
-              opacity: 0,
-              transform: 'translateY(30px)',
+              borderRadius: '16px', padding: '1.75rem',
+              opacity: 0, transform: 'translateY(30px)',
               transition: `opacity 0.6s ease ${index * 100}ms, transform 0.6s ease ${index * 100}ms`,
               cursor: 'default',
             }}
@@ -130,7 +126,6 @@ export default function Features() {
           </div>
         ))}
       </div>
-
     </section>
   )
 }

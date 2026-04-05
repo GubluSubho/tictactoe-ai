@@ -129,7 +129,7 @@ export default function Navbar() {
             </span>
           </div>
           <button
-            onClick={() => navigate('/game')}
+            onClick={() => navigate('/select')}
             style={{
               background: '#c8f04a',
               border: 'none',

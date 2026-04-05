@@ -54,7 +54,7 @@ export default function CTA() {
           gap: '1rem', flexWrap: 'wrap', position: 'relative',
         }}>
           <button
-            onClick={() => navigate(user ? '/game' : '/auth')}
+            onClick={() => navigate(user ? '/select' : '/auth')}
             style={{
               background: '#c8f04a', color: '#060912',
               border: 'none', padding: '0.9rem 2.25rem',
