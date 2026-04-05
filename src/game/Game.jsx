@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ref, set, push, get } from 'firebase/database'
+import { db } from '../firebase'
+import { useAuth } from '../context/AuthContext'
 import Board from './Board'
 import { checkWinner, getBestMove } from './minimax'
 
@@ -7,6 +10,7 @@ const difficulties = ['easy', 'medium', 'hard']
 
 export default function Game() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [difficulty, setDifficulty] = useState(null)
   const [playerSign, setPlayerSign] = useState(null)
@@ -20,16 +24,34 @@ export default function Game() {
   const [thinking, setThinking] = useState(false)
   const [scores, setScores] = useState({ player: 0, ai: 0, draw: 0 })
 
-  // Track whose turn starts each round — cycles X then O then X...
   const roundRef = useRef(0)
-
   const aiSign = playerSign === 'X' ? 'O' : 'X'
-
-  // Who has the current turn
   const currentTurnSign = xIsNext ? 'X' : 'O'
   const isPlayerTurn = currentTurnSign === playerSign
 
-  // AI move effect
+  // Save match result to Firebase
+  const saveMatchToDb = async (outcome) => {
+    if (!user) return
+    try {
+      await push(ref(db, `matches/${user.uid}`), {
+        outcome,
+        difficulty,
+        playerSign,
+        timestamp: Date.now(),
+      })
+      const snap = await get(ref(db, `users/${user.uid}/scores`))
+      const current = snap.val() || { wins: 0, losses: 0, draws: 0 }
+      await set(ref(db, `users/${user.uid}/scores`), {
+        wins: current.wins + (outcome === 'win' ? 1 : 0),
+        losses: current.losses + (outcome === 'loss' ? 1 : 0),
+        draws: current.draws + (outcome === 'draw' ? 1 : 0),
+      })
+    } catch (err) {
+      console.error('Failed to save match:', err)
+    }
+  }
+
+  // Main game effect
   useEffect(() => {
     if (setupStep !== 'game') return
     if (result) return
@@ -39,10 +61,13 @@ export default function Game() {
       setResult(res)
       if (res.winner === 'draw') {
         setScores(prev => ({ ...prev, draw: prev.draw + 1 }))
+        saveMatchToDb('draw')
       } else if (res.winner === playerSign) {
         setScores(prev => ({ ...prev, player: prev.player + 1 }))
+        saveMatchToDb('win')
       } else {
         setScores(prev => ({ ...prev, ai: prev.ai + 1 }))
+        saveMatchToDb('loss')
       }
       return
     }
@@ -72,7 +97,6 @@ export default function Game() {
   }
 
   const resetGame = () => {
-    // Cycle who starts: round 0 → X starts, round 1 → O starts, round 2 → X starts...
     roundRef.current += 1
     const xStarts = roundRef.current % 2 === 0
     setBoard(Array(9).fill(null))
@@ -107,7 +131,7 @@ export default function Game() {
   }
 
   const getStatus = () => {
-    if (thinking) return `AI is thinking...`
+    if (thinking) return 'AI is thinking...'
     if (result) {
       if (result.winner === 'draw') return "It's a Draw!"
       if (result.winner === playerSign) return 'You Win! 🎉'
@@ -134,12 +158,8 @@ export default function Game() {
         <h2 style={headingStyle}>Choose Difficulty</h2>
         <p style={subStyle}>Sets the AI skill level for the entire session.</p>
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          width: '100%',
-          maxWidth: '340px',
-          marginTop: '2rem'
+          display: 'flex', flexDirection: 'column',
+          gap: '1rem', width: '100%', maxWidth: '340px', marginTop: '2rem'
         }}>
           {[
             { key: 'easy', label: 'Easy', desc: 'AI plays randomly — you will win', color: '#7ef2c8' },
@@ -163,11 +183,8 @@ export default function Game() {
             >
               <div style={{ textAlign: 'left' }}>
                 <div style={{
-                  fontFamily: 'Syne, sans-serif',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  color: 'white',
-                  marginBottom: '3px'
+                  fontFamily: 'Syne, sans-serif', fontWeight: 700,
+                  fontSize: '1rem', color: 'white', marginBottom: '3px'
                 }}>
                   {d.label}
                 </div>
@@ -178,14 +195,9 @@ export default function Game() {
               <span style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: d.color,
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                padding: '0.25rem 0.65rem',
-                borderRadius: '6px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                whiteSpace: 'nowrap',
+                color: d.color, fontSize: '0.7rem', fontWeight: 600,
+                padding: '0.25rem 0.65rem', borderRadius: '6px',
+                textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap',
               }}>
                 {d.key}
               </span>
@@ -223,7 +235,7 @@ export default function Game() {
                 e.currentTarget.style.borderColor = s.color
                 e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
                 e.currentTarget.style.transform = 'translateY(-4px)'
-                e.currentTarget.style.boxShadow = `0 16px 40px rgba(0,0,0,0.4)`
+                e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.4)'
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
@@ -244,10 +256,8 @@ export default function Game() {
                 }
               </div>
               <span style={{
-                fontFamily: 'Syne, sans-serif',
-                fontWeight: 700,
-                fontSize: '1rem',
-                color: s.color,
+                fontFamily: 'Syne, sans-serif', fontWeight: 700,
+                fontSize: '1rem', color: s.color,
               }}>
                 {s.sign}
               </span>
@@ -266,53 +276,61 @@ export default function Game() {
     <div style={screenStyle}>
       <BackButton navigate={navigate} />
 
+      {/* Profile button */}
+      <button
+        onClick={() => navigate('/profile', { state: { from: '/game' } })}
+        style={{
+          position: 'absolute', top: '1.5rem', right: '1.5rem',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: 'rgba(255,255,255,0.5)',
+          padding: '0.5rem 1rem', borderRadius: '8px',
+          cursor: 'pointer', fontSize: '0.82rem',
+          transition: 'all 0.2s', fontFamily: 'DM Sans, sans-serif',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
+          e.currentTarget.style.color = 'white'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+          e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+        }}
+      >
+        👤 Profile
+      </button>
+
       {/* Warning modal */}
       {showWarning && (
         <div style={{
-          position: 'fixed',
-          inset: 0,
+          position: 'fixed', inset: 0,
           background: 'rgba(0,0,0,0.75)',
           backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 100, padding: '1rem',
         }}>
           <div style={{
             background: '#0d1220',
             border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '24px',
-            padding: '2.5rem',
-            maxWidth: '380px',
-            width: '100%',
-            textAlign: 'center',
+            borderRadius: '24px', padding: '2.5rem',
+            maxWidth: '380px', width: '100%', textAlign: 'center',
             boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '48px', height: '48px', borderRadius: '12px',
               background: 'rgba(251,191,36,0.1)',
               border: '1px solid rgba(251,191,36,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.4rem',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '1.4rem',
               margin: '0 auto 1.25rem',
             }}>⚠️</div>
             <h3 style={{
-              fontFamily: 'Syne, sans-serif',
-              fontWeight: 700,
-              fontSize: '1.2rem',
-              color: 'white',
-              marginBottom: '0.75rem',
+              fontFamily: 'Syne, sans-serif', fontWeight: 700,
+              fontSize: '1.2rem', color: 'white', marginBottom: '0.75rem',
             }}>Change Difficulty?</h3>
             <p style={{
-              color: 'rgba(255,255,255,0.4)',
-              fontSize: '0.875rem',
-              lineHeight: 1.65,
-              marginBottom: '2rem',
+              color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem',
+              lineHeight: 1.65, marginBottom: '2rem',
             }}>
               Switching to{' '}
               <strong style={{ color: '#c8f04a' }}>{pendingDifficulty}</strong>
@@ -322,16 +340,12 @@ export default function Game() {
               <button
                 onClick={cancelDifficultyChange}
                 style={{
-                  flex: 1,
-                  padding: '0.8rem',
-                  borderRadius: '12px',
+                  flex: 1, padding: '0.8rem', borderRadius: '12px',
                   border: '1px solid rgba(255,255,255,0.1)',
                   background: 'transparent',
                   color: 'rgba(255,255,255,0.5)',
-                  fontSize: '0.9rem',
-                  fontFamily: 'DM Sans, sans-serif',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  fontSize: '0.9rem', fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer', transition: 'all 0.2s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'}
                 onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
@@ -341,16 +355,10 @@ export default function Game() {
               <button
                 onClick={confirmDifficultyChange}
                 style={{
-                  flex: 1,
-                  padding: '0.8rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: '#c8f04a',
-                  color: '#060912',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  fontFamily: 'DM Sans, sans-serif',
-                  cursor: 'pointer',
+                  flex: 1, padding: '0.8rem', borderRadius: '12px',
+                  border: 'none', background: '#c8f04a',
+                  color: '#060912', fontSize: '0.9rem', fontWeight: 700,
+                  fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = '#d4f55e'}
@@ -367,28 +375,21 @@ export default function Game() {
 
       {/* Difficulty tabs */}
       <div style={{
-        display: 'flex',
-        gap: '0.4rem',
-        marginBottom: '1.5rem',
+        display: 'flex', gap: '0.4rem', marginBottom: '1.5rem',
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '10px',
-        padding: '4px',
+        borderRadius: '10px', padding: '4px',
       }}>
         {difficulties.map(d => (
           <button
             key={d}
             onClick={() => handleDifficultyClick(d)}
             style={{
-              padding: '0.4rem 1.1rem',
-              borderRadius: '7px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.82rem',
-              fontWeight: 500,
+              padding: '0.4rem 1.1rem', borderRadius: '7px',
+              border: 'none', cursor: 'pointer',
+              fontSize: '0.82rem', fontWeight: 500,
               fontFamily: 'DM Sans, sans-serif',
-              textTransform: 'capitalize',
-              transition: 'all 0.2s',
+              textTransform: 'capitalize', transition: 'all 0.2s',
               background: difficulty === d ? '#c8f04a' : 'transparent',
               color: difficulty === d ? '#060912' : 'rgba(255,255,255,0.4)',
             }}
@@ -400,13 +401,10 @@ export default function Game() {
 
       {/* Scoreboard */}
       <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        marginBottom: '1.5rem',
+        display: 'flex', gap: '0.5rem', marginBottom: '1.5rem',
         background: 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
         border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '16px',
-        padding: '6px',
+        borderRadius: '16px', padding: '6px',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}>
         {[
@@ -418,34 +416,24 @@ export default function Game() {
             background: s.active
               ? 'linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))'
               : 'transparent',
-            border: s.active
-              ? '1px solid rgba(255,255,255,0.1)'
-              : '1px solid transparent',
-            borderRadius: '11px',
-            padding: '0.85rem 1.1rem',
-            textAlign: 'center',
-            minWidth: '85px',
-            transition: 'all 0.3s ease',
+            border: s.active ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
+            borderRadius: '11px', padding: '0.85rem 1.1rem',
+            textAlign: 'center', minWidth: '85px', transition: 'all 0.3s ease',
             boxShadow: s.active
               ? '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.07)'
               : 'none',
           }}>
             <div style={{
-              fontSize: '2rem',
-              fontWeight: 700,
-              fontFamily: 'Syne, sans-serif',
-              color: s.color,
-              lineHeight: 1,
-              marginBottom: '4px',
+              fontSize: '1.9rem', fontWeight: 800,
+              fontFamily: 'Syne, sans-serif', color: s.color,
+              lineHeight: 1, marginBottom: '4px',
             }}>
               {s.value}
             </div>
             <div style={{
               fontSize: '0.65rem',
               color: s.active ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              fontWeight: 500,
+              textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500,
             }}>
               {s.label}
             </div>
@@ -456,13 +444,10 @@ export default function Game() {
       {/* Turn indicator */}
       <div style={{
         marginBottom: '1.25rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
+        display: 'flex', alignItems: 'center', gap: '10px',
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '10px',
-        padding: '0.5rem 1.25rem',
+        borderRadius: '10px', padding: '0.5rem 1.25rem',
       }}>
         {thinking
           ? <>
@@ -477,10 +462,8 @@ export default function Game() {
             </>
           : result
           ? <span style={{
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              fontFamily: 'Syne, sans-serif',
-              color: getStatusColor(),
+              fontSize: '0.95rem', fontWeight: 700,
+              fontFamily: 'Syne, sans-serif', color: getStatusColor(),
             }}>
               {getStatus()}
             </span>
@@ -490,19 +473,13 @@ export default function Game() {
                 background: isPlayerTurn ? '#c8f04a' : '#7ef2c8',
                 display: 'inline-block',
               }} />
-              <span style={{
-                fontSize: '0.85rem',
-                color: 'rgba(255,255,255,0.6)',
-                fontFamily: 'DM Sans, sans-serif',
-              }}>
-                {isPlayerTurn ? `Your turn` : `AI's turn`}
+              <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'DM Sans, sans-serif' }}>
+                {isPlayerTurn ? 'Your turn' : "AI's turn"}
               </span>
               <span style={{
-                marginLeft: '4px',
-                fontSize: '0.75rem',
+                marginLeft: '4px', fontSize: '0.75rem',
                 color: isPlayerTurn ? '#c8f04a' : '#7ef2c8',
-                fontFamily: 'Syne, sans-serif',
-                fontWeight: 700,
+                fontFamily: 'Syne, sans-serif', fontWeight: 700,
               }}>
                 ({currentTurnSign})
               </span>
@@ -515,12 +492,9 @@ export default function Game() {
 
       {/* Round info */}
       <p style={{
-        marginTop: '1rem',
-        fontSize: '0.72rem',
-        color: 'rgba(255,255,255,0.2)',
-        letterSpacing: '0.05em',
-        textTransform: 'uppercase',
-        fontFamily: 'DM Sans, sans-serif',
+        marginTop: '1rem', fontSize: '0.72rem',
+        color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em',
+        textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif',
       }}>
         Round {roundRef.current + 1} · {difficulty} mode
       </p>
@@ -530,16 +504,11 @@ export default function Game() {
         <button
           onClick={resetGame}
           style={{
-            marginTop: '1.5rem',
-            background: '#c8f04a',
-            color: '#060912',
-            border: 'none',
-            padding: '0.85rem 2.5rem',
-            borderRadius: '12px',
-            fontSize: '1rem',
-            fontWeight: 700,
-            fontFamily: 'Syne, sans-serif',
-            cursor: 'pointer',
+            marginTop: '1.5rem', background: '#c8f04a',
+            color: '#060912', border: 'none',
+            padding: '0.85rem 2.5rem', borderRadius: '12px',
+            fontSize: '1rem', fontWeight: 700,
+            fontFamily: 'Syne, sans-serif', cursor: 'pointer',
             transition: 'all 0.2s',
             boxShadow: '0 8px 24px rgba(200,240,74,0.2)',
           }}
@@ -572,70 +541,46 @@ export default function Game() {
 const screenStyle = {
   background: '#060912',
   minHeight: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '2rem',
-  fontFamily: 'DM Sans, sans-serif',
+  display: 'flex', flexDirection: 'column',
+  alignItems: 'center', justifyContent: 'center',
+  padding: '2rem', fontFamily: 'DM Sans, sans-serif',
   position: 'relative',
 }
 
 const headingStyle = {
-  fontFamily: 'Syne, sans-serif',
-  fontWeight: 800,
-  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-  color: 'white',
-  letterSpacing: '-0.02em',
-  marginBottom: '0.5rem',
-  textAlign: 'center',
+  fontFamily: 'Syne, sans-serif', fontWeight: 800,
+  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', color: 'white',
+  letterSpacing: '-0.02em', marginBottom: '0.5rem', textAlign: 'center',
 }
 
 const subStyle = {
-  color: 'rgba(255,255,255,0.4)',
-  fontSize: '0.9rem',
-  textAlign: 'center',
-  maxWidth: '320px',
-  lineHeight: 1.6,
+  color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem',
+  textAlign: 'center', maxWidth: '320px', lineHeight: 1.6,
 }
 
 const sectionLabel = {
-  color: '#c8f04a',
-  fontSize: '0.72rem',
-  fontWeight: 600,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
-  marginBottom: '0.5rem',
+  color: '#c8f04a', fontSize: '0.72rem', fontWeight: 600,
+  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem',
 }
 
 const diffBtnStyle = {
   background: 'rgba(255,255,255,0.03)',
   border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '16px',
-  padding: '1.1rem 1.25rem',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  color: 'white',
-  transition: 'all 0.2s',
-  width: '100%',
+  borderRadius: '16px', padding: '1.1rem 1.25rem',
+  cursor: 'pointer', display: 'flex',
+  alignItems: 'center', justifyContent: 'space-between',
+  color: 'white', transition: 'all 0.2s', width: '100%',
   boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
 }
 
 const signBtnStyle = {
   background: 'rgba(255,255,255,0.03)',
   border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '20px',
-  padding: '2rem 2.5rem',
-  cursor: 'pointer',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '0.5rem',
-  transition: 'all 0.25s',
-  minWidth: '130px',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+  borderRadius: '20px', padding: '2rem 2.5rem',
+  cursor: 'pointer', display: 'flex',
+  flexDirection: 'column', alignItems: 'center',
+  gap: '0.5rem', transition: 'all 0.25s',
+  minWidth: '130px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
 }
 
 function BackButton({ navigate }) {
@@ -643,17 +588,12 @@ function BackButton({ navigate }) {
     <button
       onClick={() => navigate('/')}
       style={{
-        position: 'absolute',
-        top: '1.5rem',
-        left: '1.5rem',
+        position: 'absolute', top: '1.5rem', left: '1.5rem',
         background: 'transparent',
         border: '1px solid rgba(255,255,255,0.1)',
         color: 'rgba(255,255,255,0.5)',
-        padding: '0.5rem 1rem',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontSize: '0.85rem',
-        transition: 'all 0.2s',
+        padding: '0.5rem 1rem', borderRadius: '8px',
+        cursor: 'pointer', fontSize: '0.85rem', transition: 'all 0.2s',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
@@ -673,12 +613,9 @@ function Logo() {
   return (
     <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
       <h1 style={{
-        fontFamily: 'Syne, sans-serif',
-        fontWeight: 800,
-        fontSize: '1.4rem',
-        color: 'white',
-        letterSpacing: '-0.02em',
-        marginBottom: '0.2rem',
+        fontFamily: 'Syne, sans-serif', fontWeight: 800,
+        fontSize: '1.4rem', color: 'white',
+        letterSpacing: '-0.02em', marginBottom: '0.2rem',
       }}>TTT-AI</h1>
       <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem' }}>
         Tic Tac Toe vs AI
