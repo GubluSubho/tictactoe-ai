@@ -19,6 +19,11 @@ export default function Navbar() {
 
   useEffect(() => {
     if (user) {
+      // Check displayName first — instant, no DB call needed
+      if (user.displayName) {
+        setUsername(user.displayName)
+      }
+      // Then verify from DB in background
       get(ref(db, `users/${user.uid}`)).then(snap => {
         if (snap.exists()) setUsername(snap.val().username)
       })
@@ -48,29 +53,27 @@ export default function Navbar() {
         onClick={() => navigate('/')}
         style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
       >
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
-          gap: '3px', width: '32px', height: '32px',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '3px', width: '32px', height: '32px' }}>
           {[...Array(9)].map((_, i) => (
             <span key={i} style={{
               borderRadius: '2px',
-              background: i === 0 || i === 4 || i === 8
-                ? '#c8f04a' : 'rgba(255,255,255,0.1)',
+              background: i === 0 || i === 4 || i === 8 ? '#c8f04a' : 'rgba(255,255,255,0.1)',
             }} />
           ))}
         </div>
-        <span style={{
-          fontFamily: 'Syne, sans-serif', fontWeight: 700,
-          color: 'white', fontSize: '1.1rem', letterSpacing: '-0.02em',
-        }}>
+        <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'white', fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
           TTTAI
         </span>
       </div>
 
       {/* Auth area */}
       {user === undefined ? (
-        <div style={{ width: '80px' }} />
+        // Loading skeleton — instant, no flash
+        <div style={{
+          width: '120px', height: '34px', borderRadius: '8px',
+          background: 'rgba(255,255,255,0.05)',
+          animation: 'shimmer 1.5s ease-in-out infinite',
+        }} />
       ) : user ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div
@@ -93,16 +96,14 @@ export default function Navbar() {
           >
             <div style={{
               width: '24px', height: '24px', borderRadius: '50%',
-              background: 'rgba(200,240,74,0.15)',
-              border: '1px solid rgba(200,240,74,0.3)',
+              background: 'rgba(200,240,74,0.15)', border: '1px solid rgba(200,240,74,0.3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.65rem', color: '#c8f04a',
-              fontWeight: 700, fontFamily: 'Syne, sans-serif',
+              fontSize: '0.65rem', color: '#c8f04a', fontWeight: 700, fontFamily: 'Syne, sans-serif',
             }}>
               {username ? username[0].toUpperCase() : '?'}
             </div>
             <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', fontWeight: 500 }}>
-              {username || 'Player'}
+              {username || '...'}
             </span>
           </div>
 
@@ -111,9 +112,8 @@ export default function Navbar() {
             style={{
               background: '#c8f04a', border: 'none', color: '#060912',
               padding: '0.5rem 1.1rem', borderRadius: '8px',
-              fontSize: '0.82rem', fontWeight: 700,
-              fontFamily: 'Syne, sans-serif', cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              fontSize: '0.82rem', fontWeight: 700, fontFamily: 'Syne, sans-serif',
+              cursor: 'pointer', transition: 'all 0.2s ease',
             }}
             onMouseEnter={e => e.currentTarget.style.background = '#d4f55e'}
             onMouseLeave={e => e.currentTarget.style.background = '#c8f04a'}
@@ -124,13 +124,10 @@ export default function Navbar() {
           <button
             onClick={handleLogout}
             style={{
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.4)',
-              padding: '0.5rem 1rem', borderRadius: '8px',
-              fontSize: '0.82rem', cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontFamily: 'DM Sans, sans-serif',
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.4)', padding: '0.5rem 1rem',
+              borderRadius: '8px', fontSize: '0.82rem', cursor: 'pointer',
+              transition: 'all 0.2s ease', fontFamily: 'DM Sans, sans-serif',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
@@ -148,11 +145,9 @@ export default function Navbar() {
         <button
           onClick={() => navigate('/auth')}
           style={{
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'white', padding: '0.5rem 1.25rem',
-            borderRadius: '8px', fontSize: '0.875rem',
-            cursor: 'pointer', transition: 'all 0.2s ease',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+            color: 'white', padding: '0.5rem 1.25rem', borderRadius: '8px',
+            fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.2s ease',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
@@ -166,6 +161,13 @@ export default function Navbar() {
           Log in
         </button>
       )}
+
+      <style>{`
+        @keyframes shimmer {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
     </nav>
   )
 }

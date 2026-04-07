@@ -317,7 +317,7 @@ export default function Visualizer() {
 
       {/* Back */}
       <button
-        onClick={() => navigate('/select')}
+        onClick={() => navigate('/')}
         style={backBtnStyle}
         onMouseEnter={e => {
           e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
