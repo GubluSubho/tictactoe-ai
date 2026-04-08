@@ -167,27 +167,24 @@ export default function Profile() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(239,68,68,0.2)',
-              color: 'rgba(239,68,68,0.7)',
-              padding: '0.5rem 1.25rem', borderRadius: '8px',
-              cursor: 'pointer', fontSize: '0.82rem',
-              fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'
-              e.currentTarget.style.color = '#ef4444'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'
-              e.currentTarget.style.color = 'rgba(239,68,68,0.7)'
-            }}
-          >
-            Log Out
-          </button>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+  <button onClick={() => navigate('/edit-profile')} style={{ background: t?.card || 'rgba(255,255,255,0.04)', border: `1px solid ${t?.border || 'rgba(255,255,255,0.08)'}`, color: t?.text || 'white', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s' }}
+    onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+    ✏️ Edit Profile
+  </button>
+  <button onClick={() => navigate('/friends')} style={{ background: 'rgba(160,130,255,0.08)', border: '1px solid rgba(160,130,255,0.2)', color: '#a082ff', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s' }}
+    onMouseEnter={e => e.currentTarget.style.background = 'rgba(160,130,255,0.15)'}
+    onMouseLeave={e => e.currentTarget.style.background = 'rgba(160,130,255,0.08)'}>
+    👫 Friends
+  </button>
+  <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.2)', color: 'rgba(239,68,68,0.7)', padding: '0.5rem 1.25rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem', fontFamily: 'DM Sans, sans-serif', transition: 'all 0.2s' }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'; e.currentTarget.style.color = '#ef4444' }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)'; e.currentTarget.style.color = 'rgba(239,68,68,0.7)' }}>
+    Log Out
+  </button>
+</div>
         </div>
 
         {/* Difficulty breakdown cards */}

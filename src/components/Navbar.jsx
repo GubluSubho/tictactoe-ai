@@ -4,11 +4,16 @@ import { signOut } from 'firebase/auth'
 import { ref, get } from 'firebase/database'
 import { auth, db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+import SettingsBar from './SettingsBar'
+import { sounds } from '../utils/sounds'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [username, setUsername] = useState('')
+  const [avatar, setAvatar] = useState('')
   const { user } = useAuth()
+  const { t } = useTheme()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -19,20 +24,21 @@ export default function Navbar() {
 
   useEffect(() => {
     if (user) {
-      // Check displayName first — instant, no DB call needed
-      if (user.displayName) {
-        setUsername(user.displayName)
-      }
-      // Then verify from DB in background
+      if (user.displayName) setUsername(user.displayName)
       get(ref(db, `users/${user.uid}`)).then(snap => {
-        if (snap.exists()) setUsername(snap.val().username)
+        if (snap.exists()) {
+          setUsername(snap.val().username)
+          setAvatar(snap.val().avatar || '')
+        }
       })
     } else {
       setUsername('')
+      setAvatar('')
     }
   }, [user])
 
   const handleLogout = async () => {
+    sounds.click()
     await signOut(auth)
     navigate('/')
   }
@@ -40,134 +46,66 @@ export default function Navbar() {
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-      padding: '1rem 2rem',
+      padding: '0.85rem 2rem',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       transition: 'all 0.3s ease',
-      background: scrolled ? 'rgba(6,9,18,0.92)' : 'transparent',
+      background: scrolled ? t.navBg : 'transparent',
       backdropFilter: scrolled ? 'blur(20px)' : 'none',
-      borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
+      borderBottom: scrolled ? `1px solid ${t.border}` : 'none',
     }}>
 
       {/* Logo */}
-      <div
-        onClick={() => navigate('/')}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '3px', width: '32px', height: '32px' }}>
+      <div onClick={() => { sounds.click(); navigate('/') }} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '3px', width: '30px', height: '30px' }}>
           {[...Array(9)].map((_, i) => (
-            <span key={i} style={{
-              borderRadius: '2px',
-              background: i === 0 || i === 4 || i === 8 ? '#c8f04a' : 'rgba(255,255,255,0.1)',
-            }} />
+            <span key={i} style={{ borderRadius: '2px', background: i === 0 || i === 4 || i === 8 ? t.accent : t.border }} />
           ))}
         </div>
-        <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'white', fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
+        <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, color: t.text, fontSize: '1.05rem', letterSpacing: '-0.02em' }}>
           TTTAI
         </span>
       </div>
 
-      {/* Auth area */}
-      {user === undefined ? (
-        // Loading skeleton — instant, no flash
-        <div style={{
-          width: '120px', height: '34px', borderRadius: '8px',
-          background: 'rgba(255,255,255,0.05)',
-          animation: 'shimmer 1.5s ease-in-out infinite',
-        }} />
-      ) : user ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div
-            onClick={() => navigate('/profile', { state: { from: '/' } })}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '8px', padding: '0.4rem 0.85rem',
-              cursor: 'pointer', transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(200,240,74,0.3)'
-              e.currentTarget.style.background = 'rgba(200,240,74,0.06)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-            }}
-          >
-            <div style={{
-              width: '24px', height: '24px', borderRadius: '50%',
-              background: 'rgba(200,240,74,0.15)', border: '1px solid rgba(200,240,74,0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.65rem', color: '#c8f04a', fontWeight: 700, fontFamily: 'Syne, sans-serif',
-            }}>
-              {username ? username[0].toUpperCase() : '?'}
+      {/* Right side */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+
+        <SettingsBar />
+
+        {user === undefined ? (
+          <div style={{ width: '100px', height: '34px', borderRadius: '8px', background: t.card, animation: 'shimmer 1.5s ease-in-out infinite' }} />
+        ) : user ? (
+          <>
+            <div onClick={() => { sounds.click(); navigate('/profile', { state: { from: '/' } }) }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: t.card, border: `1px solid ${t.border}`, borderRadius: '8px', padding: '0.4rem 0.85rem', cursor: 'pointer', transition: 'all 0.2s ease' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = t.accentBorder; e.currentTarget.style.background = t.accentBg }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.background = t.card }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: t.accentBg, border: `1px solid ${t.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: avatar ? '0.9rem' : '0.65rem', color: t.accent, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
+                {avatar || (username ? username[0].toUpperCase() : '?')}
+              </div>
+              <span style={{ color: t.text, fontSize: '0.82rem', fontWeight: 500 }}>{username || '...'}</span>
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', fontWeight: 500 }}>
-              {username || '...'}
-            </span>
-          </div>
 
-          <button
-            onClick={() => navigate('/select')}
-            style={{
-              background: '#c8f04a', border: 'none', color: '#060912',
-              padding: '0.5rem 1.1rem', borderRadius: '8px',
-              fontSize: '0.82rem', fontWeight: 700, fontFamily: 'Syne, sans-serif',
-              cursor: 'pointer', transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = '#d4f55e'}
-            onMouseLeave={e => e.currentTarget.style.background = '#c8f04a'}
-          >
-            Play
+            <button onClick={() => { sounds.click(); navigate('/select') }} style={{ background: t.accent, border: 'none', color: '#060912', padding: '0.5rem 1.1rem', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, fontFamily: 'Syne, sans-serif', cursor: 'pointer', transition: 'all 0.2s ease' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+              Play
+            </button>
+
+            <button onClick={handleLogout} style={{ background: 'transparent', border: `1px solid ${t.border}`, color: t.textMuted, padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'DM Sans, sans-serif' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = t.borderHover; e.currentTarget.style.color = t.text }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textMuted }}>
+              Log out
+            </button>
+          </>
+        ) : (
+          <button onClick={() => { sounds.click(); navigate('/auth') }} style={{ background: 'transparent', border: `1px solid ${t.border}`, color: t.text, padding: '0.5rem 1.25rem', borderRadius: '8px', fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.2s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = t.borderHover; e.currentTarget.style.background = t.card }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.background = 'transparent' }}>
+            Log in
           </button>
+        )}
+      </div>
 
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.4)', padding: '0.5rem 1rem',
-              borderRadius: '8px', fontSize: '0.82rem', cursor: 'pointer',
-              transition: 'all 0.2s ease', fontFamily: 'DM Sans, sans-serif',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-              e.currentTarget.style.color = 'white'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.4)'
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => navigate('/auth')}
-          style={{
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-            color: 'white', padding: '0.5rem 1.25rem', borderRadius: '8px',
-            fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-            e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          Log in
-        </button>
-      )}
-
-      <style>{`
-        @keyframes shimmer {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-        }
-      `}</style>
+      <style>{`@keyframes shimmer{0%,100%{opacity:0.4}50%{opacity:0.8}}`}</style>
     </nav>
   )
 }

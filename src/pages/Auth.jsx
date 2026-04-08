@@ -832,6 +832,14 @@ export default function Auth() {
             : mode === 'login' ? 'Log In →' : 'Create Account →'}
         </button>
 
+        {mode === 'login' && (
+  <p style={{ textAlign: 'center', margin: '0.75rem 0 0', fontSize: '0.78rem' }}>
+    <span onClick={() => navigate('/forgot-password')} style={{ color: 'rgba(255,255,255,0.35)', cursor: 'pointer', textDecoration: 'underline' }}>
+      Forgot password?
+    </span>
+  </p>
+)}
+
         <p style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.78rem', margin: '1.25rem 0 0' }}>
           <span
             onClick={() => navigate('/')}

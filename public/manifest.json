@@ -1,0 +1,19 @@
+{
+  "name": "Tic Tac Toe AI",
+  "short_name": "TTTAI",
+  "description": "Play Tic Tac Toe against an unbeatable Minimax AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060912",
+  "theme_color": "#060912",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["games", "entertainment", "education"],
+  "shortcuts": [
+    { "name": "Play vs AI", "url": "/game", "description": "Challenge the Minimax AI" },
+    { "name": "Online Battle", "url": "/online", "description": "Play online with others" },
+    { "name": "Leaderboard", "url": "/leaderboard", "description": "View global rankings" }
+  ]
+}
