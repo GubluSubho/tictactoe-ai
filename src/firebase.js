@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDxvFdi65WiIceryt9-oaQ3r5opCpD_22s",
+  apiKey: "AIzaSyDxvFdi65W-oaQ3r5opCpD_22s",
   authDomain: "tictactoe-ai-1204d.firebaseapp.com",
   databaseURL: "https://tictactoe-ai-1204d-default-rtdb.firebaseio.com",
   projectId: "tictactoe-ai-1204d",
@@ -14,7 +14,8 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
-
 export const auth = getAuth(app)
 export const db = getDatabase(app)
 export const googleProvider = new GoogleAuthProvider()
+
+googleProvider.setCustomParameters({ prompt: 'select_account' })
