@@ -5,6 +5,7 @@ import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import Board from './Board'
 import { checkWinner, getBestMove } from './minimax'
+import { useTheme } from '../context/ThemeContext'
 
 const difficulties = ['easy', 'medium', 'hard']
 

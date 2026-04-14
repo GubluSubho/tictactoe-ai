@@ -188,7 +188,7 @@ export default function Profile() {
         </div>
 
         {/* Difficulty breakdown cards */}
-        <div style={{
+        <div className="diff-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
           gap: '0.75rem', marginBottom: '1.5rem',
         }}>
@@ -285,7 +285,7 @@ export default function Profile() {
         </div>
 
         {/* Stats cards */}
-        <div style={{
+        <div className="stats-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
           gap: '0.75rem', marginBottom: '1.5rem',
