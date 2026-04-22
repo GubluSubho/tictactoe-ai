@@ -34,12 +34,13 @@ export const THEMES = {
     dangerBorder: 'rgba(239,68,68,0.2)',
     shadow: '0 8px 32px rgba(0,0,0,0.4)',
     shadowLg: '0 24px 60px rgba(0,0,0,0.5)',
-    shadowCard: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
+    shadowCard: '0 4px 16px rgba(0,0,0,0.3)',
     inputBg: 'rgba(255,255,255,0.03)',
     navBg: 'rgba(6,9,18,0.92)',
     gradientCard: 'linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))',
     gradientBoard: 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
-    scrollbar: '#1a2035',
+    glow1: 'rgba(200,240,74,0.06)',
+    glow2: 'rgba(126,242,200,0.05)',
   },
   light: {
     bg: '#f4f6fb',
@@ -77,44 +78,45 @@ export const THEMES = {
     navBg: 'rgba(244,246,251,0.95)',
     gradientCard: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8))',
     gradientBoard: 'linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
-    scrollbar: '#d0d5e8',
-  }
+    glow1: 'rgba(90,138,0,0.05)',
+    glow2: 'rgba(13,122,95,0.04)',
+  },
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('theme') || 'dark' } catch { return 'dark' }
+  })
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     document.body.style.background = THEMES[theme].bg
     document.body.style.color = THEMES[theme].text
-
-    // Scrollbar
-    const style = document.createElement('style')
-    style.id = 'theme-scrollbar'
-    const existing = document.getElementById('theme-scrollbar')
-    if (existing) existing.remove()
-    style.textContent = `
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: ${THEMES[theme].bg}; }
-      ::-webkit-scrollbar-thumb { background: ${THEMES[theme].scrollbar}; border-radius: 3px; }
-    `
-    document.head.appendChild(style)
   }, [theme])
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
     setTheme(next)
-    localStorage.setItem('theme', next)
+    try { localStorage.setItem('theme', next) } catch {}
   }
 
-  const t = THEMES[theme]
-
   return (
-    <ThemeContext.Provider value={{ theme, t, toggleTheme, isDark: theme === 'dark' }}>
+    <ThemeContext.Provider value={{
+      theme,
+      t: THEMES[theme],
+      toggleTheme,
+      isDark: theme === 'dark',
+    }}>
       {children}
     </ThemeContext.Provider>
   )
 }
 
-export const useTheme = () => useContext(ThemeContext)
+export const useTheme = () => {
+  const ctx = useContext(ThemeContext)
+  if (!ctx) {
+    // Fallback so pages never crash even if context missing
+    return { theme: 'dark', t: THEMES.dark, toggleTheme: () => {}, isDark: true }
+  }
+  return ctx
+}
