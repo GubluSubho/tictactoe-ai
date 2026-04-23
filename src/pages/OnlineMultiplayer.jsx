@@ -1,3 +1,10 @@
+// Add this import at the top
+const boardToFirebase = (board) => {
+  const obj = {}
+  board.forEach((cell, i) => { obj[String(i)] = cell === null ? '' : cell })
+  return obj
+}
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ref, set, get, onValue, push } from 'firebase/database'
@@ -63,7 +70,7 @@ export default function OnlineMultiplayer() {
       const winLength = boardSize >= 5 ? 5 : boardSize
       await set(ref(db, `rooms/${roomId}`), {
         boardSize, winLength,
-        board: Array(boardSize * boardSize).fill(null),
+        board: boardToFirebase(Array(boardSize * boardSize).fill(null)),
         status: 'waiting',
         players: { X: { uid: user.uid, username, elo } },
         xIsNext: true,
